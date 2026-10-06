@@ -1,0 +1,10 @@
+#  File: config.toml
+#  Author: C. Noga (github.com/nohgz)
+#  Version: 1.0
+#  Date: 2026-10-05
+#  ***********************************
+#  Contains the various configuration options for PHOENIX.
+#  GNU GPL v3.0
+ 
+[visual]
+show_header = true      # Show the PHOENIX logo as an ANSI-code-colored banner
