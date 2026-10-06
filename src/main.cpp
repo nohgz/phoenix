@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Yep, we have a GPU!\n");
     device::launch_hello();
   #else 
-    fprintf(stderr, "Nah, we don't have a GPU!\n");
+    fprintf(stderr, "Nah, we don't have a GPU!\n"); 
     fprintf(stderr, "[CPU] eps4(1,2,3,4) returned result %d\n", core::geometry::eps4(1, 2, 3, 4));
   #endif
 

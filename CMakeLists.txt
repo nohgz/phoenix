@@ -6,7 +6,19 @@ project(PHOENIX LANGUAGES CXX)
 string(ASCII 27 ESCAPE)
 string(CONCAT PHOENIX_HEAD "[${ESCAPE}[1m${ESCAPE}[38;5;208mPHOENIX${ESCAPE}[0m]")
 
+# --- Compile-time Flags ---
 option(PHX_FORCE_CPU "${PHOENIX_HEAD} Forcing CPU-only compilation, disabling GPU auto-detection" OFF)
+
+set(PHX_ACCURACY "FP64" CACHE STRING "Precision configuration profile")
+set_property(CACHE PHX_ACCURACY PROPERTY STRINGS FP64 FP32_GEODESICS FP32_TRANS FP32)
+
+# Sanity Check to prevent typos from breaking builds
+if(NOT PHX_ACCURACY MATCHES "^(FP64|FP32_GEODESICS|FP32_TRANSFER|FP32)$")
+  message(FATAL_ERROR "${PHOENIX_HEAD} Invalid PHX_ACCURACY selection: '${PHX_ACCURACY}'. Must be FP64, FP32_GEODESICS, FP32_TRANS, or FP32.")
+endif()
+
+add_compile_definitions(ACCURACY=${PHX_ACCURACY})
+message(STATUS "${PHOENIX_HEAD} Precision set to: ${PHX_ACCURACY}")
 
 list(APPEND CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/Modules"
@@ -98,6 +110,7 @@ if(GPU_FOUND)
 
   target_compile_options(PHOENIX PRIVATE
     $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${OpenMP_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CUDA>:-DACCURACY=${PHX_ACCURACY}>
   )
 
   set_target_properties(PHOENIX PROPERTIES

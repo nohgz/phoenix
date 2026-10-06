@@ -11,9 +11,9 @@ TODO (but its probs just have cmake (cuda optional), have the libs, and run pybu
 Uses the fast light approximation, meaning that `PHOENIX` only works for single snapshots.
 
 ## Code Organization Notes
-`src/core` - Code that can run on both the device and host will live here.
-`src/device` - Code that is device only will live here.
-`src/host` - Code that is host only will live here.
+* `src/core` - Code that can run on both the device and host will live here.
+* `src/device` - Code that is device only will live here.
+* `src/host` - Code that is host only will live here.
 
 ## About
 PHOENIX was originally developed for an undergraduate thesis focused on high performance general relativistic radiative transfer.

@@ -14,7 +14,7 @@ def pb_printstr(str):
 
 shutil.rmtree("build", ignore_errors=True)
 
-cmake_flags = ["-DCMAKE_BUILD_TYPE=Release"]
+cmake_flags = ["-DCMAKE_BUILD_TYPE=Release", "-DPHX_ACCURACY=FP64"]
 
 if len(sys.argv) > 1 and sys.argv[-1] == "cpu":
     pb_printstr("Building PHOENIX in forced CPU-only mode...")
