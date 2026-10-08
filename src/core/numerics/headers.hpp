@@ -14,8 +14,10 @@
 
 #if defined(__CUDACC__)
     #define GRRT_SHARED_FUNCTION __host__ __device__ static inline
+    #define GRRT_SHARED_FORCEINLINE __host__ __device__ static __forceinline__
 #else
     #define GRRT_SHARED_FUNCTION static inline
+    #define GRRT_SHARED_FORCEINLINE static inline
 #endif
 
 #include "constants.hpp"

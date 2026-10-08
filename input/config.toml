@@ -8,3 +8,9 @@
  
 [visual]
 show_header = true      # Show the PHOENIX logo as an ANSI-code-colored banner
+
+[grmhd]
+dump = "input/data2000.dat"     # The GRMHD data dump
+grid_file = "input/grid_mks.in" # The BHAC grid settings
+nspin = 3                       # Index of the spin in the dump's neqpar
+sfc = true                      # Read the data as a Morton space filling curve

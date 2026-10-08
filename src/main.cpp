@@ -16,6 +16,7 @@
 #include "host/formatting/headers.hpp"
 #include "host/io/headers.hpp"
 #include "core/geometry/headers.hpp" // for eps4 test
+#include "core/model/headers.hpp"
 
 #if PHX_GPU_ENABLED
 #include "device/headers.cuh"
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]) {
 
   // -- parse cli arguments, which can override the config.toml --
   int first_arg_idx = 1;
+  // if the first arg is the config.toml filepath
   if (argc > 1 && strchr(argv[1], '=') == NULL) {
     if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
       host::fancy_printing::infomsg("usage: %s [input/config.toml] [section.key=value ...]\n", argv[0]);
@@ -37,16 +39,25 @@ int main(int argc, char *argv[]) {
   }
   std::vector<std::string> cli_overrides(argv + first_arg_idx, argv + argc);
 
-  host::config::Config conf;
+  core::bhac::Model model = {};
+  host::config::Params conf_params;
 
   try {
-    host::config::load_config(cfgpath, cli_overrides, conf);
+    host::config::load_config(cfgpath, cli_overrides, conf_params, model.uparams);
   } catch(const std::exception& e) {
     host::fancy_printing::failmsg(e.what());
     return EXIT_FAILURE;
   }
   
-  if (conf.show_header) host::fancy_printing::header();
+  if (conf_params.show_header) host::fancy_printing::header();
+  host::fancy_printing::okmsg("Load config: %s", cfgpath.c_str());
+
+  try {
+    host::bhac_io::load_bhac_grid(model.gparams, conf_params.grid_file);
+    host::bhac_io::load(&model, conf_params.dump_file);
+  } catch (std::runtime_error e) {
+    host::fancy_printing::failmsg(e.what());
+  }
 
   #if PHX_GPU_ENABLED
     fprintf(stderr, "Yep, we have a GPU!\n");

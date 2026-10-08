@@ -15,15 +15,22 @@
 #include <map>
 #include <set>
 
+#include "core/model/headers.hpp"
+
 namespace host {
   namespace config {
     /**
-    * @brief See the comments in the config.toml file for descriptions of these
-    *        variables.
+    * @brief The code execution parameters passed in config.toml.
+    *        See the comments in the config.toml file for descriptions of 
+    *        its members.
     */
-    struct Config {
+    struct Params {
       // [visual]
       bool show_header;
+
+      // [grmhd]
+      std::string dump_file;
+      std::string grid_file;
     };
 
     /**
@@ -103,7 +110,8 @@ namespace host {
     inline void load_config(
       const std::string& filepath,
       const std::vector<std::string>& overrides,
-      Config& config
+      Params& params,
+      core::bhac::UserParams model_uparams
     ) {
       std::ifstream file(filepath);
       if (!file) {
@@ -165,7 +173,11 @@ namespace host {
         if (!t.empty()) dst = (t == "true" || t == "1");
       };
 
-      boolean("visual.show_header", config.show_header, true);
+      boolean("visual.show_header", params.show_header, true);
+      str("grmhd.dump", params.dump_file, true);
+      str("grmhd.grid_file", params.grid_file, true);
+      integer("grmhd.nspin", model_uparams.nspin, true);
+      boolean("grmhd.sfc", model_uparams.sfc, true);
 
       if (!missing.empty()) {
         throw std::runtime_error(filepath + ": missing required key(s):" + missing);

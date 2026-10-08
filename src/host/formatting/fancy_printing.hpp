@@ -1,6 +1,6 @@
 /**
  * @file fancy_printing.hpp
- * @author C. Noga (@nohgz)
+ * @author C. Noga (github.com/nohgz)
  * @brief Contains various utilities for printing fancy messages
  * @version 1.0
  * @date 2026-10-05
@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-namespace host{
-  namespace fancy_printing{
+namespace host {
+  namespace fancy_printing {
     #define COLOR_RED     "\033[1;31m"
     #define COLOR_GREEN   "\033[1;32m"
     #define COLOR_YELLOW  "\033[1;33m"
@@ -31,6 +31,15 @@ namespace host{
       va_start(args, msg);
       fprintf(stderr, "\n[      ] ");
       vfprintf(stderr, msg, args);
+      va_end(args);
+    }
+
+    static inline void okmsg(const char* msg, ...) {
+      va_list args;
+      va_start(args, msg);
+      fprintf(stderr, "\r[ %s OK %s ] ", COLOR_GREEN, COLOR_RESET);
+      vfprintf(stderr, msg, args);
+      fprintf(stderr, "\n");
       va_end(args);
     }
 
@@ -69,12 +78,12 @@ namespace host{
 
     static inline void header() {
       fprintf(stderr, "\n\
-        \033[38;5;220m██████╗ ██╗  ██╗ ██████╗ ███████╗███╗   ██╗██╗██╗  ██╗\033[0m\n\
-        \033[38;5;214m██╔══██╗██║  ██║██╔═══██╗██╔════╝████╗  ██║██║╚██╗██╔╝\033[0m\n\
-        \033[38;5;208m██████╔╝███████║██║   ██║█████╗  ██╔██╗ ██║██║ ╚███╔╝ \033[0m\n\
-        \033[38;5;202m██╔═══╝ ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║██║ ██╔██╗ \033[0m\n\
-        \033[38;5;196m██║     ██║  ██║╚██████╔╝███████╗██║ ╚████║██║██╔╝ ██╗\033[0m\n\
-        \033[38;5;160m╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝\033[0m\n"
+██████╗ ██╗  ██╗\033[38;5;160m ██████╗ \033[0m███████╗███╗   ██╗██╗██╗  ██╗\n\
+██╔══██╗██║  ██║\033[38;5;196m██╔═══██╗\033[0m██╔════╝████╗  ██║██║╚██╗██╔╝\n\
+██████╔╝███████║\033[38;5;202m██║   ██║\033[0m█████╗  ██╔██╗ ██║██║ ╚███╔╝ \n\
+██╔═══╝ ██╔══██║\033[38;5;208m██║   ██║\033[0m██╔══╝  ██║╚██╗██║██║ ██╔██╗ \n\
+██║     ██║  ██║\033[38;5;214m╚██████╔╝\033[0m███████╗██║ ╚████║██║██╔╝ ██╗\n\
+╚═╝     ╚═╝  ╚═╝\033[38;5;220m ╚═════╝ \033[0m╚══════╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝\n\n"
       );
     }
   }

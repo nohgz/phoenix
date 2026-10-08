@@ -13,48 +13,40 @@
 
 // not using a namespace here for brevity in other pieces of the code. sue me
 
+// hardcoding the default mode so the ide stops screeching
+#ifndef ACCURACY
+  #define ACCURACY FP64
+#endif
+
 enum accuracy_mode {
   FP64,
-  FP32_GEODESICS,
-  FP32_TRANSFER,
   FP32
 };
 
-template <accuracy_mode ACC> struct precision_types;
+using scalar = std::conditional_t<ACCURACY == FP32, float, double>;
 
-template <> struct precision_types<FP64> {
-  using scalar       = double;
-  using scalar_geo   = double;
-  using scalar_trans = double;
-  using scalar_plas  = double;
+/**
+ * @return Name of the build's accuracy mode, for messages and default output directories.
+ */
+static inline const char* accuracy_name(void) {
+  return ACCURACY == FP32 ? "fp32" : "fp64";
+}
+
+/**
+ * @brief Numerical thresholds that depend on the width of the type they are used in.
+ */
+template <class T> struct limits;
+
+template <> struct limits<float> {
+  static constexpr float step_tiny  = 1e-30f;  // the "zero" added to |k^i| in the step-size rule
+  static constexpr float step_big   = 1e30f;   // the "no grid cap" value
+  static constexpr float tol_series = 1e-9f;   // relative size below which a term of the operator series is dropped
+  static constexpr float tol_asym   = 1e-8f;   // the cutoff for terms in the Hankel series 
 };
 
-template <> struct precision_types<FP32_GEODESICS> {
-  using scalar       = float;
-  using scalar_geo   = float;
-  using scalar_trans = double;
-  using scalar_plas  = double;
+template <> struct limits<double> {
+  static constexpr double step_tiny  = 1e-160;
+  static constexpr double step_big   = 1e100;
+  static constexpr double tol_series = 1e-18;
+  static constexpr double tol_asym   = 1e-17;
 };
-
-template <> struct precision_types<FP32_TRANSFER> {
-  using scalar       = float;
-  using scalar_geo   = double;
-  using scalar_trans = float;
-  using scalar_plas  = double;
-};
-
-template <> struct precision_types<FP32> {
-  using scalar       = float;
-  using scalar_geo   = float;
-  using scalar_trans = float;
-  using scalar_plas  = float;
-};
-
-// FP values that can often afford to lose precision
-using scalar       = typename precision_types<ACCURACY>::scalar;
-// FP values in the geodesic RHS, metric evaluations, and step-size calcs
-using scalar_geo   = typename precision_types<ACCURACY>::scalar_geo;
-// FP values in the polarized radiative transfer machinery
-using scalar_trans = typename precision_types<ACCURACY>::scalar_trans;
-// FP values in the plasma evaluation machinery
-using scalar_plas  = typename precision_types<ACCURACY>::scalar_plas;
