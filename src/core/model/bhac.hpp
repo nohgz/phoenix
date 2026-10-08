@@ -13,7 +13,7 @@ namespace core {
       double B;
       double Ne;
     };
-    
+
     /**
      * @brief Holds the grid parameters that the dump does not carry.
      */
@@ -48,12 +48,14 @@ namespace core {
       --------
       And the compile time flags (setup.sh)
       */
-     
+
       // The spin's index in the dump neqpar
       int nspin;
       // The sign of the poloidal field
       int bpol;
-      
+      // The number of refinement levels
+      int nlevels;
+
       bool sfc;
     };
 
@@ -62,8 +64,22 @@ namespace core {
       UserParams uparams;
       int nleafs, ndim, nwini, nws, cells;
       int nx[3];     // cells per block
-      int nxlone[3];
       int ng[3];     // blocks per dimension on the base level
+
+      // -- amr table & grmhd primitives --
+      // idx: [3*leaf + dim]
+      double *lb_FP64;
+      double *dxc_FP64;
+
+      // idx: [3*leaf + dim]
+      scalar *lb;
+      scalar *dxc;
+
+      int level_dims[16][3];
+      int* level_map[16];         // leaf index per (level, i, j, k), -1 = none: O(1) block lookup
+
+      scalar *prim;
+
     };
   }
 }

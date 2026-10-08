@@ -26,7 +26,7 @@ namespace host {
       fprintf(stderr, "\r[ %sFAIL%s ]\n", COLOR_RED, COLOR_RESET);
     }
 
-    static inline void print_blankmsg(const char* msg, ...) {
+    static inline void blankmsg(const char* msg, ...) {
       va_list args;
       va_start(args, msg);
       fprintf(stderr, "\n[      ] ");
@@ -39,7 +39,7 @@ namespace host {
       va_start(args, msg);
       fprintf(stderr, "\r[ %s OK %s ] ", COLOR_GREEN, COLOR_RESET);
       vfprintf(stderr, msg, args);
-      fprintf(stderr, "\n");
+      for (int i = 0; i < 100; i++) fprintf(stderr, " ");
       va_end(args);
     }
 
@@ -48,6 +48,7 @@ namespace host {
       va_start(args, msg);
       fprintf(stderr, "\r[ %sFAIL%s ] ", COLOR_RED, COLOR_RESET);
       vfprintf(stderr, msg, args);
+      for (int i = 0; i < 100; i++) fprintf(stderr, " ");
       fprintf(stderr, "\n");
       va_end(args);
     }
@@ -55,7 +56,7 @@ namespace host {
     static inline void timemsg(const char* msg, ...) {
       va_list args;
       va_start(args, msg);
-      fprintf(stderr, "\n\r[ %sTIME%s ] ", COLOR_YELLOW, COLOR_RESET);
+      fprintf(stderr, "\n[ %sTIME%s ] ", COLOR_YELLOW, COLOR_RESET);
       vfprintf(stderr, msg, args);
       va_end(args);
     }
@@ -63,7 +64,7 @@ namespace host {
     static inline void infomsg(const char* msg, ...) {
       va_list args;
       va_start(args, msg);
-      fprintf(stderr, "\n[ %sINFO%s ] ", COLOR_CYAN, COLOR_RESET);
+      fprintf(stderr, "[ %sINFO%s ] ", COLOR_CYAN, COLOR_RESET);
       vfprintf(stderr, msg, args);
       va_end(args);
     }
@@ -73,7 +74,14 @@ namespace host {
       va_start(args, msg);
       fprintf(stderr, "\n[ %sDBUG%s ] ", COLOR_MAGENTA, COLOR_RESET);
       vfprintf(stderr, msg, args);
+      fprintf(stderr, "\n");
       va_end(args);
+    }
+
+    static inline void hline() {
+      fprintf(stderr, "\n");
+      for (int i = 0; i < 75; i++) fprintf(stderr, "─");
+      fprintf(stderr, "\n");
     }
 
     static inline void header() {
@@ -83,7 +91,7 @@ namespace host {
 ██████╔╝███████║\033[38;5;202m██║   ██║\033[0m█████╗  ██╔██╗ ██║██║ ╚███╔╝ \n\
 ██╔═══╝ ██╔══██║\033[38;5;208m██║   ██║\033[0m██╔══╝  ██║╚██╗██║██║ ██╔██╗ \n\
 ██║     ██║  ██║\033[38;5;214m╚██████╔╝\033[0m███████╗██║ ╚████║██║██╔╝ ██╗\n\
-╚═╝     ╚═╝  ╚═╝\033[38;5;220m ╚═════╝ \033[0m╚══════╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝\n\n"
+╚═╝     ╚═╝  ╚═╝\033[38;5;220m ╚═════╝ \033[0m╚══════╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝\n"
       );
     }
   }

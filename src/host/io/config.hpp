@@ -4,7 +4,7 @@
  * @brief Contains the machinery that is used to read the TOML config file.
  * @version 1.0
  * @date 2026-10-05
- * 
+ *
  * GNU GPL v3.0
  */
 
@@ -21,7 +21,7 @@ namespace host {
   namespace config {
     /**
     * @brief The code execution parameters passed in config.toml.
-    *        See the comments in the config.toml file for descriptions of 
+    *        See the comments in the config.toml file for descriptions of
     *        its members.
     */
     struct Params {
@@ -31,11 +31,12 @@ namespace host {
       // [grmhd]
       std::string dump_file;
       std::string grid_file;
+      bool gpu_decode;
     };
 
     /**
      * @brief Parses a TOML file and places the key value pairs into a std::map<std::string, std::string>
-     * 
+     *
      * @param text The contents of the TOML file
      * @param kv The key value pairs of the TOML file
      * @throw std::runtime_error
@@ -66,7 +67,7 @@ namespace host {
 
         line = trim(line);
         if (line.empty()) continue;
-        
+
         if (line[0] == '[') {
           if (line.back() != ']') {
             throw std::runtime_error("Line " + std::to_string(ln) + ": bad section header");
@@ -101,7 +102,7 @@ namespace host {
     /**
      * @brief Loads the config.toml file located in `filepath`, applies overrides
      *        to each one if there is a CLI argument that matches it.
-     * 
+     *
      * @param filepath   The config.toml file (located in input/config.toml)
      * @param overrides  The list of CLI args that override the config
      * @param config     The config struct that is written to
@@ -111,7 +112,7 @@ namespace host {
       const std::string& filepath,
       const std::vector<std::string>& overrides,
       Params& params,
-      core::bhac::UserParams model_uparams
+      core::bhac::UserParams* model_uparams
     ) {
       std::ifstream file(filepath);
       if (!file) {
@@ -120,9 +121,9 @@ namespace host {
       std::stringstream buf;
       buf << file.rdbuf();
       std::map<std::string, std::string> arg_map;
-      
+
       parse_toml(buf.str(), arg_map);
-      
+
       bool freq_override = false;
       for (const std::string& a : overrides) {
         const size_t eq = a.find('=');
@@ -134,7 +135,7 @@ namespace host {
         if (a.compare(0, 15, "camera.frequenc") == 0 && !freq_override) {
           freq_override = true;
           for (auto it = arg_map.begin(); it != arg_map.end();) {
-            it = (it->first.compare(0, 15, "camera.frequenc") == 0) ? 
+            it = (it->first.compare(0, 15, "camera.frequenc") == 0) ?
                     arg_map.erase(it) :
                     std::next(it);
           }
@@ -145,7 +146,7 @@ namespace host {
       std::set<std::string> used;
       std::string missing;
       auto has = [&](const char* k) { return arg_map.count(k) > 0; };
-      
+
       auto str = [&](const char* k, std::string& dst, bool required) {
         if (has(k)) {
           dst = arg_map[k];
@@ -154,30 +155,34 @@ namespace host {
           missing += std::string(" ") + k;
         }
       };
-      
+
       auto num = [&](const char* k, double& dst, bool required) {
         std::string t;
         str(k, t, required);
         if (!t.empty()) dst = std::atof(t.c_str());
       };
-      
+
       auto integer = [&](const char* k, int& dst, bool required) {
         double v = dst;
         num(k, v, required);
         dst = (int)v;
       };
-      
+
       auto boolean = [&](const char* k, bool& dst, bool required) {
         std::string t;
-        str(k, t, required); 
+        str(k, t, required);
         if (!t.empty()) dst = (t == "true" || t == "1");
       };
-
+      // [visual]
       boolean("visual.show_header", params.show_header, true);
+
+      // [grmhd]
       str("grmhd.dump", params.dump_file, true);
       str("grmhd.grid_file", params.grid_file, true);
-      integer("grmhd.nspin", model_uparams.nspin, true);
-      boolean("grmhd.sfc", model_uparams.sfc, true);
+      boolean("grmhd.gpu_decode", params.gpu_decode, true);
+      integer("grmhd.nspin", model_uparams->nspin, true);
+      boolean("grmhd.sfc", model_uparams->sfc, true);
+      integer("grmhd.nlevels", model_uparams->nlevels, true);
 
       if (!missing.empty()) {
         throw std::runtime_error(filepath + ": missing required key(s):" + missing);

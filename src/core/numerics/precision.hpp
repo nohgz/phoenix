@@ -4,9 +4,9 @@
  * @brief Contains the machinery for compile-time switching of FP32 & FP64
  * @version 1.0
  * @date 2026-10-05
- * 
+ *
  * GNU GPL v3.0
- * 
+ *
  */
 
 #pragma once
@@ -41,7 +41,7 @@ template <> struct limits<float> {
   static constexpr float step_tiny  = 1e-30f;  // the "zero" added to |k^i| in the step-size rule
   static constexpr float step_big   = 1e30f;   // the "no grid cap" value
   static constexpr float tol_series = 1e-9f;   // relative size below which a term of the operator series is dropped
-  static constexpr float tol_asym   = 1e-8f;   // the cutoff for terms in the Hankel series 
+  static constexpr float tol_asym   = 1e-8f;   // the cutoff for terms in the Hankel series
 };
 
 template <> struct limits<double> {
