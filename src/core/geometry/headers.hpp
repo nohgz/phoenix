@@ -4,12 +4,13 @@
  * @brief The geometry library contains geometry for the spacetime metrics, camera, and geodesic equations.
  * @version 1.0
  * @date 2026-10-05
- * 
+ *
  * GNU GPL v3.0
- * 
+ *
  */
 #pragma once
 
+#include "core/geometry/metric.hpp"
 #include "core/numerics/headers.hpp"
 
 namespace core {

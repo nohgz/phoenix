@@ -357,8 +357,6 @@ namespace host {
 
       // -- block geometry
       const size_t n3 = 3 * (size_t)model->nleafs;
-      model->lb_FP64 = (double*)std::malloc(n3 * sizeof(double));
-      model->dxc_FP64 = (double*)std::malloc(n3 * sizeof(double));
       model->lb = (scalar*)std::malloc(n3 * sizeof(scalar));
       model->dxc = (scalar*)std::malloc(n3 * sizeof(scalar));
       double dx1[3], dxc0[3];
@@ -371,10 +369,8 @@ namespace host {
       for (int leaf = 0; leaf < model->nleafs; leaf++) {
         const double inv_scale = 1.0 / (double)(1 << (level[leaf] - 1));
         for (int dim = 0; dim < 3; dim++) {
-          model->lb_FP64[3 * leaf + dim] = model->gparams.xprobmin[dim] + ind[3 * leaf + dim] * dx1[dim] * inv_scale;
-          model->dxc_FP64[3 * leaf + dim] = dxc0[dim] * inv_scale;
-          model->lb[3 * leaf + dim] = scalar(model->lb_FP64[3 * leaf + dim]);
-          model->dxc[3 * leaf + dim] = scalar(model->dxc_FP64[3 * leaf + dim]);
+          model->lb[3 * leaf + dim] = scalar(model->gparams.xprobmin[dim] + ind[3 * leaf + dim] * dx1[dim] * inv_scale);
+          model->dxc[3 * leaf + dim] = scalar(dxc0[dim] * inv_scale);
         }
       }
       build_level_map(model, level, ind);
@@ -385,7 +381,7 @@ namespace host {
         // Two phases per chunk of leaves:
         // 1. serial file reads into a buffer
         // 2. conserved -> primitive over the chunk in parallel
-        model->prim = (scalar*)std::calloc((size_t)model->nleafs * model->cells * core::model::NPRIM, sizeof(scalar));
+        model->prim = (scalar*)std::calloc((size_t)model->nleafs * model->cells * core::bhac::NPRIM, sizeof(scalar));
         const int CHUNK = 256;
         const size_t leaf_doubles = (size_t)model->nwini * model->cells;
         std::vector<double> raw((size_t)CHUNK * leaf_doubles);
@@ -406,18 +402,19 @@ namespace host {
             const int leaf = leaf0 + q;
             const double* leaf_buf = raw.data() + (size_t)q * leaf_doubles;
             for (int cell = 0; cell < model->cells; cell++) {
-              // core::model::decode_cell(
-              //   model,
-              //   &model->lb_FP64[3 * leaf],
-              //   &model->dxc_FP64[3 * leaf],
-              //   leaf_buf,
-              //   cell,
-              //   &model->prim[((size_t)leaf * model->cells + cell) * core::model::NPRIM]
-              // );
+              core::bhac::convert2prim(
+                model,
+                &model->lb[3 * leaf],
+                &model->dxc[3 * leaf],
+                leaf_buf,
+                cell,
+                &model->prim[((size_t)leaf * model->cells + cell) * core::bhac::NPRIM]
+              );
             }
           }
         }
       }
+      std::fclose(dumpfile);
     }
-  }
-}
+  } // namespace bhac_io
+} // namespace host
