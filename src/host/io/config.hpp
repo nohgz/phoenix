@@ -28,6 +28,9 @@ namespace host {
       // [visual]
       bool show_header;
 
+      // [output]
+      std::string outdir;
+
       // [grmhd]
       std::string dump_file;
       std::string grid_file;
@@ -176,8 +179,11 @@ namespace host {
       // [visual]
       boolean("visual.show_header", params.show_header, true);
 
+      // [output]
+      str("output.dir", params.outdir, true);
+
       // [grmhd]
-      str("grmhd.dump", params.dump_file, true);
+      str("grmhd.dump_file", params.dump_file, true);
       str("grmhd.grid_file", params.grid_file, true);
       boolean("grmhd.gpu_decode", params.gpu_decode, true);
       integer("grmhd.nspin", model_uparams->nspin, true);

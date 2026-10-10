@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "host/formatting/headers.hpp"
 #include "host/io/headers.hpp"
@@ -58,7 +59,8 @@ int main(int argc, char *argv[]) {
 
 #if !PHX_GPU_ENABLED
   if (conf_params.gpu_decode) {
-    host::fancy_printing::infomsg("No GPU available, falling back to host decoding!");
+    host::fancy_printing::warnmsg("No GPU available, falling back to host decoding!");
+    conf_params.gpu_decode = false;
   }
 #endif
 
@@ -81,6 +83,10 @@ int main(int argc, char *argv[]) {
   }
 
   host::fancy_printing::hline();
+  host::fancy_printing::infomsg("uhhh");
+  host::fancy_printing::blankmsg("Create output directory \"%s\"", conf_params.outdir.c_str());
+  mkdir(conf_params.outdir.c_str(), 0755);
+  host::fancy_printing::return_ok();
 
   #if PHX_GPU_ENABLED
     fprintf(stderr, "\nYep, we have a GPU!\n");

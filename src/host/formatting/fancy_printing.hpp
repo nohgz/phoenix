@@ -69,6 +69,14 @@ namespace host {
       va_end(args);
     }
 
+    static inline void warnmsg(const char* msg, ...) {
+      va_list args;
+      va_start(args, msg);
+      fprintf(stderr, "\n[ %sWARN%s ] ", COLOR_YELLOW, COLOR_RESET);
+      vfprintf(stderr, msg, args);
+      va_end(args);
+    }
+
     static inline void debugmsg(const char* msg, ...) {
       va_list args;
       va_start(args, msg);
