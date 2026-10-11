@@ -9,6 +9,18 @@
 [visual]
 show_header = true                   # Show the PHOENIX logo as an ANSI-code-colored banner
 
+[camera]
+inclination = 50                     # deg
+img_width   = 200                    # pixels
+img_height  = 200                    # pixels
+fov_x       = 40                     # Rg
+fov_y       = 40                     # Rg
+
+# frequency   = 230e9                   # single frequency
+frequency_list = [86e9, 230e9, 345e9] # explicit list of frequencies for spectra
+# frequency_linspace =[100e9, 400e9, 7] # [start, stop, num] for spectra
+# frequency_logspace =[100e9, 400e9, 7] # [start, stop, num] for spectra
+
 [output]
 dir         = "output"               # The output directory
 

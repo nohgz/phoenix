@@ -37,6 +37,109 @@ namespace host {
       bool gpu_decode;
     };
 
+
+    /**
+     * @brief Reads the observing frequencies and places them in the out vector
+     *
+     * @param kv    The key value pairs from the toml
+     * @param used  Keys that were consumed
+     * @param out   Output
+     * @throw std::runtime_error
+     */
+    inline void read_frequencies(
+      const std::map<std::string, std::string>& kv,
+      std::set<std::string>& used,
+      std::vector<double>& out
+    ) {
+      enum { SINGLE, LIST, LINSPACE, LOGSPACE, NFORMS };
+      const char* forms[NFORMS] = {
+        "camera.frequency",
+        "camera.frequency_list",
+        "camera.frequency_linspace",
+        "camera.frequency_logspace"
+      };
+
+      int given = 0, form = SINGLE;
+      for (int i = 0; i < NFORMS; i++) {
+        if (kv.count(forms[i]) > 0) {
+          given++;
+          form = i;
+        }
+      }
+      if (given != 1) {
+        throw std::runtime_error("Too many (or no) frequency forms given!");
+      }
+      const std::string key = forms[form];
+      const std::string& text = kv.at(key);
+      used.insert(key);
+
+      auto number = [&](const std::string& t) {
+        char* end = nullptr;
+        const double v = std::strtod(t.c_str(), &end);
+        if (end == t.c_str() || *end != '\0') {
+          throw std::runtime_error(key + ": not a number: " + t);
+        }
+        return v;
+      };
+
+      auto numbers = [&]() {
+        const size_t a = text.find('['), b = text.rfind(']');
+        if (a == std::string::npos || b == std::string::npos || b < a) {
+          throw std::runtime_error(key + " must be a list on ONE line: [a, b, ...]");
+        }
+        std::vector<double> v;
+        std::stringstream ss(text.substr(a + 1, b - a - 1));
+        std::string tok;
+        while (std::getline(ss, tok, ',')) {
+          const size_t p = tok.find_first_not_of(" \t"), q = tok.find_last_not_of(" \t");
+          if (p == std::string::npos) continue;  // empty (trailing comma)
+          v.push_back(number(tok.substr(p, q - p + 1)));
+        }
+        return v;
+      };
+
+      out.clear();
+      if (form == SINGLE) {
+        out.push_back(number(text));
+      } else {
+        const std::vector<double> v = numbers();
+        if (form == LIST) {
+          if (v.empty()) {
+            throw std::runtime_error(key + " is empty!");
+          }
+          out = v;
+        } else {
+          if (v.size() != 3) {
+            throw std::runtime_error(key + " has " + std::to_string(v.size()) + "arguments! (Expected 3)");
+          }
+          const double lo = v[0], hi = v[1];
+          if (!(v[2] >= 2. && v[2] <= 1e6) || v[2] != std::floor(v[2])) {
+            throw std::runtime_error(key + ": n must be an integer >= 2! (use frequency = nu for a single frequency)");
+          }
+          if (!(lo > 0.) || !(hi > lo)) {
+            throw std::runtime_error(key + ": need 0 < start < stop!");
+          }
+          const int n = (int)v[2];
+          for (int i = 0; i < n; i++) {
+            const double x = double(i) / (n - 1);
+            out.push_back(i == n - 1 ? hi : (form == LOGSPACE ? lo * std::pow(hi / lo, x) : lo + (hi - lo) * x));
+          }
+        }
+      }
+
+      std::set<std::string> seen;
+      for (double v : out) {
+        if (!(v > 0.) || !std::isfinite(v)) {
+          throw std::runtime_error("frequencies must be positive and finite");
+        }
+        char b[64];
+        std::snprintf(b, sizeof b, "%e", v);
+        if (!seen.insert(b).second) {
+          throw std::runtime_error(std::string("duplicate frequency ") + b + " (they are used to name the HDF5 datasets)");
+        }
+      }
+    }
+
     /**
      * @brief Parses a TOML file and places the key value pairs into a std::map<std::string, std::string>
      *
@@ -178,6 +281,20 @@ namespace host {
       };
       // [visual]
       boolean("visual.show_header", params.show_header, true);
+
+      // [camera]
+      num("camera.inclination", model_uparams->fov_x, true);
+      integer("camera.img_width", model_uparams->img_width, true);
+      integer("camera.img_height", model_uparams->img_height, true);
+      num("camera.fov_x", model_uparams->fov_x, true);
+      num("camera.fov_y", model_uparams->fov_y, true);
+
+      try {
+        read_frequencies(arg_map, used, model_uparams->frequencies);
+      } catch (const std::exception& e) {
+        throw std::runtime_error(filepath + ": " + e.what());
+      }
+      model_uparams->nfreqs = model_uparams->frequencies.size();
 
       // [output]
       str("output.dir", params.outdir, true);

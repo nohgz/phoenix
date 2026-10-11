@@ -10,8 +10,9 @@
  */
 #pragma once
 
-#include "core/geometry/metric.hpp"
 #include "core/numerics/headers.hpp"
+#include "core/geometry/metric.hpp"
+#include "core/geometry/camera.hpp"
 
 namespace core {
   namespace geometry {

@@ -13,11 +13,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "host/formatting/headers.hpp"
 #include "host/io/headers.hpp"
 #include "core/geometry/headers.hpp" // for eps4 test
 #include "core/model/headers.hpp"
+#include "host/render/headers.hpp"
+#include "core/render/headers.hpp"
+
+#ifdef _OPENMP
+#include <omp.h>
+#else
+static inline int omp_get_max_threads(void) { return 1; }
+#endif
 
 #if PHX_GPU_ENABLED
 #include "device/headers.cuh"
@@ -88,12 +97,25 @@ int main(int argc, char *argv[]) {
   mkdir(conf_params.outdir.c_str(), 0755);
   host::fancy_printing::return_ok();
 
+  std::vector<core::pixel::FreqOut> res(
+    (size_t)model.uparams.img_width * model.uparams.img_height * model.uparams.frequencies.size()
+  );
+
+  const std::vector<int> jobs = host::jobs::schedule(&model.uparams, PHX_GPU_ENABLED);
+  const int njobs = (int)jobs.size();
+  std::atomic<int> ndone(0);
+  core::pixel::PixelStats tot;
+
+  fprintf(stderr, "\n");
   #if PHX_GPU_ENABLED
-    fprintf(stderr, "\nYep, we have a GPU!\n");
-    device::launch_hello();
   #else
-    fprintf(stderr, "\nNah, we don't have a GPU!\n");
-    fprintf(stderr, "[CPU] eps4(1,2,3,4) returned result %d\n", core::geometry::eps4(1, 2, 3, 4));
+    host::fancy_printing::infomsg("Workload: %d pixels, %d thread(s), %0.1f (px/thread)\n\n", njobs, omp_get_max_threads(), float(njobs)/omp_get_max_threads());
+    {
+      auto bar = barkeep::ProgressBar(&ndone, {.out = &std::cerr, .total = njobs, .message = "Integrating", .speed = 0.1,
+                                               .speed_unit = "px/s", .style = barkeep::Rich, .no_tty = !isatty(fileno(stderr))});
+      tot = host::jobs::process(&model, jobs, res.data(), &ndone);
+      bar->done();
+    }
   #endif
 
   return EXIT_SUCCESS;

@@ -85,6 +85,20 @@ namespace core {
       int nlevels;
       // Should we use a Morton-ordered z curve?
       bool sfc;
+      // The image width
+      int img_width;
+      // The image height
+      int img_height;
+      // The camera horizontal field of view
+      double fov_x;
+      // The camera vertical field of view
+      double fov_y;
+      // The camera's inclination wrt the BH
+      double inclination;
+      // The array of frequencies to integrate over
+      std::vector<double> frequencies;
+      // How many frequencies are we integrating over?
+      int nfreqs;
     };
 
     struct Model {
