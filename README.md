@@ -1,4 +1,6 @@
-![PHOENIX Logo](/assets/phoenix_logo.png)
+<p align="center">
+  <img src="https://github.com/nohgz/phoenix/blob/main/assets/phoenix_logo.png?raw=true" alt="Phoenix Logo"/>
+</p>
 
 **Parallel High-Order EmissioN Integrator for null geodesiX**
 
@@ -15,8 +17,13 @@ Uses the fast light approximation, meaning that `PHOENIX` only works for single 
 * `src/device` - Code that is device only will live here.
 * `src/host` - Code that is host only will live here.
 
-Namespaces follow the convention of `where_executes::header_name::function` e.g. `host::config::parse_toml(...)`
+Namespaces follow the convention of `where_executes::header_name::function`. For example, `host::config::parse_toml(...)`.
 
 ## About
 PHOENIX was originally developed for an undergraduate thesis focused on high performance general relativistic radiative transfer.
-This now-public repo is the second iteration of the code with more professional commits and major bugfixes.
+The poster created for its original presentation can be found here:
+> Noga, Christopher, "PHOENIX: GPU-Accelerated Polarized Radiative Transfer for Curved Spacetime" (2026).
+> *Symposium on Research and Creative Expression (SORCE)*. 1585.
+> https://scholar.valpo.edu/cus/1585
+
+This now-public repo is the second iteration of the code with substantial speedups, more professional commits, and major bugfixes.

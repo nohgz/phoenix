@@ -13,13 +13,4 @@
 #include "core/numerics/headers.hpp"
 #include "core/geometry/metric.hpp"
 #include "core/geometry/camera.hpp"
-
-namespace core {
-  namespace geometry {
-    // levi-civita permutation symbol with [0123] = 1.
-    GRRT_SHARED_FUNCTION int eps4(int i, int j, int k, int l) {
-      if (i == j || i == k || i == l || j == k || j == l || k == l) return 0;
-      return ((i - j) * (i - k) * (i - l) * (j - k) * (j - l) * (k - l)) / 12;
-    }
-  }
-}
+#include "core/geometry/tetrad.hpp"

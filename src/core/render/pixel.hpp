@@ -9,6 +9,8 @@
  *
  */
 
+#include "core/geometry/headers.hpp"
+
 namespace core {
   namespace pixel {
     /**
@@ -42,11 +44,24 @@ namespace core {
       double beta,
       FreqOut* out
     ) {
-      PixelStats stats = {137, 42, 67};
       const int nf = model->uparams.nfreqs;
-      if (alpha == -19.9 && beta == -19.7) {
-        fprintf(stderr, "rendering pixel with these many freqs %d\n\n", nf);
+
+      PixelStats stats;
+      stats.steps = stats.nplasma = stats.bad = 0;
+      for (int q = 0; q < nf; q++) {
+        for (int c = 0; c < 4; c++) {
+          out[q].IQUV[c] = 0.;
+        }
+        out[q].tau = out[q].tauF = 0.;
       }
+
+      // Current ray parameters (x_u and k_u)
+      double photon_u[8];
+      // Polarization basis
+      double F1_u[4];
+
+      core::camera::initialize_photon(model, alpha, beta, photon_u);
+      core::tetrad::camera_basis(model, photon_u, photon_u + 4, F1_u);
 
       return stats;
     }

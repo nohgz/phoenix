@@ -1,8 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include "core/numerics/headers.hpp"
 #include "core/numerics/precision.hpp"
-#include "core/geometry/headers.hpp"
+#include "core/geometry/metric.hpp"
 
 namespace core {
   namespace bhac {
@@ -95,6 +97,10 @@ namespace core {
       double fov_y;
       // The camera's inclination wrt the BH
       double inclination;
+      // The camera's distance to the BH
+      double r_cam;
+      // The time the camera sits at
+      double t_init;
       // The array of frequencies to integrate over
       std::vector<double> frequencies;
       // How many frequencies are we integrating over?

@@ -109,14 +109,14 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "\n");
   #if PHX_GPU_ENABLED
   #else
-    host::fancy_printing::infomsg("Workload: %d pixels, %d thread(s), %0.1f (px/thread)\n\n", njobs, omp_get_max_threads(), float(njobs)/omp_get_max_threads());
+    host::fancy_printing::infomsg("Workload: %d pixels, %d thread(s), %0.1f px/thread\n\n", njobs, omp_get_max_threads(), float(njobs)/omp_get_max_threads());
     {
-      auto bar = barkeep::ProgressBar(&ndone, {.out = &std::cerr, .total = njobs, .message = "Integrating", .speed = 0.1,
+      auto bar = barkeep::ProgressBar(&ndone, {.out = &std::cerr, .total = njobs, .message = "Raymarching", .speed = 0.1,
                                                .speed_unit = "px/s", .style = barkeep::Rich, .no_tty = !isatty(fileno(stderr))});
       tot = host::jobs::process(&model, jobs, res.data(), &ndone);
       bar->done();
     }
   #endif
-
+  
   return EXIT_SUCCESS;
 }

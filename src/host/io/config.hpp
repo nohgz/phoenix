@@ -288,6 +288,8 @@ namespace host {
       integer("camera.img_height", model_uparams->img_height, true);
       num("camera.fov_x", model_uparams->fov_x, true);
       num("camera.fov_y", model_uparams->fov_y, true);
+      num("camera.r_cam", model_uparams->r_cam, true);
+      num("camera.t_init", model_uparams->t_init, true);
 
       try {
         read_frequencies(arg_map, used, model_uparams->frequencies);

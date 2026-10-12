@@ -20,6 +20,8 @@
     #define GRRT_SHARED_FORCEINLINE static inline
 #endif
 
+GRRT_SHARED_FUNCTION double sgn(double x) { return (x < 0.) ? -1. : (x > 0.) ? 1. : 0.; }
+
 // Math helpers whose device form is cheaper than the generic one
 #ifdef __CUDA_ARCH__
   GRRT_SHARED_FUNCTION void sincos_t(float x, float* s, float* c) { sincosf(x, s, c); }
@@ -33,8 +35,6 @@
   GRRT_SHARED_FUNCTION double fmod_t(double x, double y) { return std::fmod(x, y); }
 #endif
 
-
-
-#include "constants.hpp"
-#include "precision.hpp"
-#include "bessel.hpp"
+#include "core/numerics/constants.hpp"
+#include "core/numerics/precision.hpp"
+#include "core/numerics/bessel.hpp"
