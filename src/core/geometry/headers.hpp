@@ -14,3 +14,4 @@
 #include "core/geometry/metric.hpp"
 #include "core/geometry/camera.hpp"
 #include "core/geometry/tetrad.hpp"
+#include "core/geometry/geodesic.hpp"

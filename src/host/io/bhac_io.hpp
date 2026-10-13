@@ -128,6 +128,17 @@ namespace host {
       return ans;
     }
 
+    /**
+     * @brief Everything of the Model that is not the dump's table
+     */
+    static void fill_model(
+      core::bhac::Model* model
+    ) {
+      model->cut_in = scalar((1. + std::sqrt(1. - (double)model->a * (double)model->a)) * (1. + model->uparams.horizon_margin));
+      model->r_out = scalar(1.1 * model->uparams.r_cam);
+    }
+
+
     static inline bool read_int(FILE* f, int* v) {
       return std::fread(v, sizeof(int), 1, f) == 1;
     }
@@ -415,6 +426,7 @@ namespace host {
         }
       }
       std::fclose(dumpfile);
+      fill_model(model);
     }
   } // namespace bhac_io
 } // namespace host

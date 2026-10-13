@@ -104,19 +104,26 @@ int main(int argc, char *argv[]) {
   const std::vector<int> jobs = host::jobs::schedule(&model.uparams, PHX_GPU_ENABLED);
   const int njobs = (int)jobs.size();
   std::atomic<int> ndone(0);
-  core::pixel::PixelStats tot;
+  core::pixel::RunStats tot;
 
   fprintf(stderr, "\n");
   #if PHX_GPU_ENABLED
   #else
     host::fancy_printing::infomsg("Workload: %d pixels, %d thread(s), %0.1f px/thread\n\n", njobs, omp_get_max_threads(), float(njobs)/omp_get_max_threads());
     {
-      auto bar = barkeep::ProgressBar(&ndone, {.out = &std::cerr, .total = njobs, .message = "Raymarching", .speed = 0.1,
-                                               .speed_unit = "px/s", .style = barkeep::Rich, .no_tty = !isatty(fileno(stderr))});
+      auto bar = barkeep::ProgressBar(&ndone, {
+        .out = &std::cerr,
+        .total = njobs,
+        .message = "Raymarching",
+        .speed = 0.1,
+        .speed_unit = "px/s",
+        .style = barkeep::Rich,
+        .no_tty = !isatty(fileno(stderr))
+      });
       tot = host::jobs::process(&model, jobs, res.data(), &ndone);
       bar->done();
     }
   #endif
-  
+
   return EXIT_SUCCESS;
 }

@@ -15,7 +15,7 @@
 
 // hardcoding the default mode so the ide stops screeching
 #ifndef ACCURACY
-  #define ACCURACY FP64
+  #define ACCURACY FP32
 #endif
 
 enum accuracy_mode {
@@ -24,6 +24,7 @@ enum accuracy_mode {
 };
 
 using scalar = std::conditional_t<ACCURACY == FP32, float, double>;
+inline constexpr bool IS_FP32 = sizeof(scalar) == sizeof(float);
 
 /**
  * @return Name of the build's accuracy mode, for messages and default output directories.
@@ -50,3 +51,20 @@ template <> struct limits<double> {
   static constexpr double tol_series = 1e-18;
   static constexpr double tol_asym   = 1e-17;
 };
+
+namespace core {
+  namespace precision {
+    /**
+     * @brief Compensated addition hi + lo += d (Knuth TwoSum then Fast2Sum).
+    */
+    GRRT_SHARED_FORCEINLINE void comp_add(scalar* hi, scalar* lo, scalar d) {
+      const scalar s = *hi + d;
+      const scalar bb = s - *hi;
+      const scalar err = (*hi - (s - bb)) + (d - bb);
+      *lo += err;
+      const scalar s2 = s + *lo;
+      *lo = *lo - (s2 - s);
+      *hi = s2;
+    }
+  }
+}

@@ -21,7 +21,6 @@ if len(sys.argv) > 1 and sys.argv[-1] == "cpu":
     cmake_flags.append("-DPHX_FORCE_CPU=ON")
 else:
     pb_printstr("Building PHOENIX in default mode...")
-    
 
 subprocess.run(["cmake", "-S", ".", "-B", "build"] + cmake_flags, check=True)
 subprocess.run(["cmake", "--build", "build", "--", "-j"], check=True)

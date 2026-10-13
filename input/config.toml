@@ -9,13 +9,19 @@
 [visual]
 show_header = true                   # Show the PHOENIX logo as an ANSI-code-colored banner
 
+[integration]
+stepsize = 0.01                      # A multiplier for the ray step size
+max_steps = 1e4                      # The number of steps each ray can take
+horizon_margin = 0.01
+max_order = 100                      # maximum number of turning points for theta
+
 [camera]
 inclination = 50                     # deg
 img_width   = 200                    # pixels
 img_height  = 200                    # pixels
 fov_x       = 40                     # Rg
 fov_y       = 40                     # Rg
-r_cam        = 1e4                    # Rg
+r_cam       = 1e4                    # Rg
 t_init      = 0                      # time init
 # frequency   = 230e9                # single frequency
 frequency_list = [86e9, 230e9, 345e9] # explicit list of frequencies for spectra
@@ -32,3 +38,7 @@ gpu_decode  = false                  # Decode the primitives on the GPU
 nspin       = 3                      # Index of the spin in the dump's neqpar
 sfc         = false                  # Read the data as a Morton space filling curve
 nlevels     = -1                     # The max number of AMR refinement levels (-1 if unknown)
+
+[plasma]
+r_low = 1
+r_high = 1

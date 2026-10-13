@@ -46,7 +46,7 @@ namespace host {
     /**
      * @brief Renders the pixels in jobs on all available OpenMP threads
      */
-    inline core::pixel::PixelStats process(
+    inline core::pixel::RunStats process(
       const core::bhac::Model* model,
       const std::vector<int>& jobs,
       core::pixel::FreqOut* result,
@@ -71,7 +71,7 @@ namespace host {
           &alpha, &beta
         );
 
-        const core::pixel::PixelStats ps = core::pixel::render_pixel(
+        const core::pixel::RunStats ps = core::pixel::render_pixel(
           model,
           alpha,
           beta,
@@ -83,7 +83,7 @@ namespace host {
         bad += ps.bad;
         ++*ndone;
       }
-      core::pixel::PixelStats total = {steps, segs, bad};
+      core::pixel::RunStats total = {steps, segs, bad};
       return total;
     }
   }

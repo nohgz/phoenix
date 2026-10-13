@@ -262,7 +262,13 @@ namespace host {
         }
       };
 
-      auto num = [&](const char* k, double& dst, bool required) {
+      auto dbl = [&](const char* k, double& dst, bool required) {
+        std::string t;
+        str(k, t, required);
+        if (!t.empty()) dst = std::atof(t.c_str());
+      };
+
+      auto sclr = [&](const char* k, scalar& dst, bool required) {
         std::string t;
         str(k, t, required);
         if (!t.empty()) dst = std::atof(t.c_str());
@@ -270,7 +276,7 @@ namespace host {
 
       auto integer = [&](const char* k, int& dst, bool required) {
         double v = dst;
-        num(k, v, required);
+        dbl(k, v, required);
         dst = (int)v;
       };
 
@@ -282,14 +288,20 @@ namespace host {
       // [visual]
       boolean("visual.show_header", params.show_header, true);
 
+      // [integration]
+      sclr("integration.stepsize", model_uparams->stepsize, true);
+      integer("integration.max_steps", model_uparams->max_steps, true);
+      dbl("integration.horizon_margin", model_uparams->horizon_margin, true);
+      integer("integration.max_order", model_uparams->max_order, true);
+
       // [camera]
-      num("camera.inclination", model_uparams->fov_x, true);
+      dbl("camera.inclination", model_uparams->fov_x, true);
       integer("camera.img_width", model_uparams->img_width, true);
       integer("camera.img_height", model_uparams->img_height, true);
-      num("camera.fov_x", model_uparams->fov_x, true);
-      num("camera.fov_y", model_uparams->fov_y, true);
-      num("camera.r_cam", model_uparams->r_cam, true);
-      num("camera.t_init", model_uparams->t_init, true);
+      dbl("camera.fov_x", model_uparams->fov_x, true);
+      dbl("camera.fov_y", model_uparams->fov_y, true);
+      dbl("camera.r_cam", model_uparams->r_cam, true);
+      dbl("camera.t_init", model_uparams->t_init, true);
 
       try {
         read_frequencies(arg_map, used, model_uparams->frequencies);
@@ -308,6 +320,10 @@ namespace host {
       integer("grmhd.nspin", model_uparams->nspin, true);
       boolean("grmhd.sfc", model_uparams->sfc, true);
       integer("grmhd.nlevels", model_uparams->nlevels, true);
+
+      // [plasma]
+      dbl("plasma.r_low", model_uparams->r_low, true);
+      dbl("plasma.r_high", model_uparams->r_high, true);
 
       if (!missing.empty()) {
         throw std::runtime_error(filepath + ": missing required key(s):" + missing);

@@ -99,12 +99,24 @@ namespace core {
       double inclination;
       // The camera's distance to the BH
       double r_cam;
+      // electron temperature: Rlow prescription
+      double r_low;
+      // electron temperature: Rhigh prescription
+      double r_high;
       // The time the camera sits at
       double t_init;
+      // used to calculate cut_in
+      double horizon_margin;
       // The array of frequencies to integrate over
       std::vector<double> frequencies;
       // How many frequencies are we integrating over?
       int nfreqs;
+      // Maximum number of steps that each ray can take
+      int max_steps;
+      // Maximum number of times theta can wrap
+      int max_order;
+      // The scaling factor for the integration step size
+      scalar stepsize;
     };
 
     struct Model {
@@ -132,6 +144,8 @@ namespace core {
 
       scalar *prim;
 
+      // for integration stuffs
+      scalar r_out, cut_in, far_radius;
     };
 
     /**

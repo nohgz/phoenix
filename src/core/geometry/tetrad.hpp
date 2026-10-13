@@ -39,14 +39,6 @@ namespace core {
     }
 
     /**
-     * @brief levi-civita permutation symbol with eps[0,1,2,3] = 1
-     */
-    GRRT_SHARED_FUNCTION int lc_eps(int i, int j, int k, int l) {
-      if (i == j || i == k || i == l || j == k || j == l || k == l) return 0;
-      return ((i - j) * (i - k) * (i - l) * (j - k) * (j - l) * (k - l)) / 12;
-    }
-
-    /**
      * @brief RAPTOR create_observer_tetrad()
      *
      * @param m    Model
@@ -89,17 +81,15 @@ namespace core {
       core::metric::lower_index(g_dd, b_u, b_d);
       const scalar sq = std::sqrt(-core::metric::det4(g_dd));
 
-      scalar perp[4];
-      for (int i = 0; i < 4; i++) {
-        perp[i] = scalar(0);
-        for (int j = 0; j < 4; j++) {
-          for (int k = 0; k < 4; k++) {
-            for (int l = 0; l < 4; l++) {
-              const int e = lc_eps(i, j, k, l);
-              if (e) perp[i] += (scalar(-1) / sq) * scalar(e) * U_d[j] * k_d[k] * b_d[l] / (omega * Nc);
-            }
-          }
-        }
+      scalar perp[4] = {scalar(0), scalar(0), scalar(0), scalar(0)};
+      const scalar s = scalar(-1) / (sq * omega * Nc);
+      static const int idx[4][3] = {{1,2,3},{0,2,3},{0,1,3},{0,1,2}};
+      GRRT_UNROLL for (int i = 0; i < 4; i++) {
+        const int a = idx[i][0], c = idx[i][1], d = idx[i][2];
+        const scalar det = U_d[a] * (k_d[c]*b_d[d] - k_d[d]*b_d[c])
+                        - U_d[c] * (k_d[a]*b_d[d] - k_d[d]*b_d[a])
+                        + U_d[d] * (k_d[a]*b_d[c] - k_d[c]*b_d[a]);
+        perp[i] = ((i & 1) ? -s : s) * det;
       }
 
       for (int i = 0; i < 4; i++) {
@@ -109,8 +99,6 @@ namespace core {
         e_u[i][3] = eK[i];
       }
     }
-
-
 
     /**
      * @brief Camera polarization basis F1 (RAPTOR construct_f_obs_tetrad_u)

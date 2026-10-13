@@ -211,5 +211,13 @@ namespace core {
       // Combine the minors to compute the final 4x4 determinant
       return c0 * s5 - c1 * s4 + c2 * s3 + c3 * s2 - c4 * s1 + c5 * s0;
     }
+
+    GRRT_SHARED_FORCEINLINE void mat4_identity(scalar M[4][4]) {
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          M[i][j] = (i == j) ? scalar(1) : scalar(0);
+        }
+      }
+    }
   }
 }
