@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
 #include <utility>
 #include <vector>
 
@@ -60,7 +61,7 @@ namespace host {
         const int i = idx / model->uparams.img_height;
         const int j = idx % model->uparams.img_height;
 
-        double alpha, beta;
+        double a0, b0;
         core::camera::pixel_impact(
           i,
           j,
@@ -68,8 +69,11 @@ namespace host {
           model->uparams.img_height,
           model->uparams.fov_x,
           model->uparams.fov_y,
-          &alpha, &beta
+          &a0, &b0
         );
+        // position angle: the ray of the unrotated sky that lands on this pixel (cos 0 = 1, sin 0 = 0: none)
+        const double alpha = a0 * model->cos_pa + b0 * model->sin_pa;
+        const double beta = -a0 * model->sin_pa + b0 * model->cos_pa;
 
         const core::pixel::RunStats ps = core::pixel::render_pixel(
           model,

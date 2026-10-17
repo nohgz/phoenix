@@ -1,7 +1,8 @@
 /**
  * @file precision.hpp
  * @author C. Noga (github.com/nohgz)
- * @brief Contains the machinery for compile-time switching of FP32 & FP64
+ * @brief Contains the machinery for compile-time switching of FP32 & FP64,
+ *        as well as some useful numbers that are dependent on the precision.
  * @version 1.0
  * @date 2026-10-05
  *
@@ -10,6 +11,10 @@
  */
 
 #pragma once
+
+#include <type_traits>
+
+#include "core/numerics/macros.hpp"
 
 // not using a namespace here for brevity in other pieces of the code. sue me
 
@@ -30,7 +35,7 @@ inline constexpr bool IS_FP32 = sizeof(scalar) == sizeof(float);
  * @return Name of the build's accuracy mode, for messages and default output directories.
  */
 static inline const char* accuracy_name(void) {
-  return ACCURACY == FP32 ? "fp32" : "fp64";
+  return ACCURACY == FP32 ? "FP32" : "FP64";
 }
 
 /**

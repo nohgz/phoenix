@@ -23,7 +23,16 @@ namespace core {
     }
 
     /**
-     * @brief Newton inversion of theta = x2 + (h/2) sin(2 x2) (RAPTOR Xg2_approx_rand).
+     * @brief Solid angle of one pixel [sr]: (fov_x / w) (fov_y / h) (r_g / D)^2.
+     */
+    GRRT_SHARED_FUNCTION double pixel_solid_angle(const core::bhac::Model* model) {
+      const core::bhac::UserParams& u = model->uparams;
+      const double dist_cm = u.distance * core::constants::KPC;
+      return (u.fov_x / u.img_width * model->units.L / dist_cm) * (u.fov_y / u.img_height * model->units.L / dist_cm);
+    }
+
+    /**
+     * @brief RAPTOR Xg2_approx_rand
      */
     GRRT_SHARED_FUNCTION double Xg2(double hs, double Xr2) {
       double cur = Xr2, prev = 1.e-15;
@@ -37,7 +46,7 @@ namespace core {
     }
 
     /**
-     * @brief RAPTOR Ug2_approx_rand: k^theta -> k^{x2}.
+     * @brief RAPTOR Ug2_approx_rand
      */
     GRRT_SHARED_FUNCTION double Ug2(double hs, double Ur2, double Xg2v) {
       double cur = Ur2, prev = 1.e-15;
@@ -69,7 +78,12 @@ namespace core {
       const double rcam = model->uparams.r_cam;
       const double mu0 = std::cos(model->uparams.inclination / 180. * M_PI);
       const double th0 = std::acos(mu0);
-      const double Xc[4] = {model->uparams.t_init, std::log(rcam), th0, 0.};
+#if PHX_CAMERA_PHI
+      const double phi0 = model->uparams.phi_cam / 180. * M_PI;
+#else
+      const double phi0 = 0.;
+#endif
+      const double Xc[4] = {model->uparams.t_init, std::log(rcam), th0, phi0};
 
       const double ll = -alpha * std::sqrt(1. - mu0 * mu0);
       const double qq = beta * beta + mu0 * mu0 * (alpha * alpha - 1.);  // RAPTOR literal

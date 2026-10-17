@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#include <cmath>
+
 namespace core {
   namespace constants {
     /**
@@ -42,5 +44,40 @@ namespace core {
      * @brief Gravitational constant, \f$G\f$
      */
     inline constexpr double G_GRAV = 6.674e-8;
+    /**
+     * @brief Solar mass in g
+     */
+    inline constexpr double M_SUN = 1.989e33;
+    /**
+     * @brief Kiloparsec in cm
+     */
+    inline constexpr double KPC = 3.086e21;
+    /**
+     * @brief erg/s/cm^2/Hz -> Jy
+     */
+    inline constexpr double JANSKY = 1e23;
+
+
+    // ******* PRE COMPUTED CONSTANTS *******
+    /**
+     * @brief \f$h / (m_e c^2)\f$: dimensionless photon energy per Hz
+     */
+    inline constexpr double H_OVER_MEC2 = H_PLANCK / (M_ELECTRON * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+    /**
+     * @brief \f$3 q_e / (4\pi m_e c)\f$
+     */
+    inline constexpr double NU_CRIT_COEFF = 3. * Q_ELECTRON / (4. * M_PI * M_ELECTRON * SPEED_OF_LIGHT);
+    /**
+     * @brief \f$q_e^2 / (2\sqrt{3} c)\f$: emissivity prefactor
+     */
+    inline constexpr double JNU_COEFF = Q_ELECTRON * Q_ELECTRON / (2. * 1.73205080756887729353 * SPEED_OF_LIGHT);
+    /**
+     * @brief \f$4\pi q_e^2 / m_e\f$: plasma frequency squared per \f$n_e\f$
+     */
+    inline constexpr double PLASMA_FREQ2_COEFF = 4. * M_PI * Q_ELECTRON * Q_ELECTRON / M_ELECTRON;
+    /**
+     * @brief \f$q_e / (m_e c)\f$: electron gyro frequency per \f$B\f$
+     */
+    inline constexpr double GYRO_FREQ_COEFF = Q_ELECTRON / (M_ELECTRON * SPEED_OF_LIGHT);
   }
 }

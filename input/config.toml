@@ -9,11 +9,10 @@
 [visual]
 show_header = true                   # Show the PHOENIX logo as an ANSI-code-colored banner
 
-[integration]
-stepsize = 0.01                      # A multiplier for the ray step size
-max_steps = 1e4                      # The number of steps each ray can take
-horizon_margin = 0.01
-max_order = 100                      # maximum number of turning points for theta
+[output]
+dir         = "output"               # The output directory
+image       = "hdf5"                 # hdf5, text, both, or none
+block_size  = 10                     # hdf5: pixels per block side, must divide the image size
 
 [camera]
 inclination = 50                     # deg
@@ -23,22 +22,40 @@ fov_x       = 40                     # Rg
 fov_y       = 40                     # Rg
 r_cam       = 1e4                    # Rg
 t_init      = 0                      # time init
-# frequency   = 230e9                # single frequency
-frequency_list = [86e9, 230e9, 345e9] # explicit list of frequencies for spectra
+# pa        = 0                      # position angle of the image on the sky [deg] (optional)
+# phi       = 0                      # azimuth of the camera around the hole [deg] (optional)
+                                     # [IMPORTANT] If you see no difference, recompile with
+frequency   = 230e9                  # single frequency
+# frequency_list = [86e9, 230e9, 345e9] # explicit list of frequencies for spectra
 # frequency_linspace =[100e9, 400e9, 7] # [start, stop, num] for spectra
 # frequency_logspace =[100e9, 400e9, 7] # [start, stop, num] for spectra
+# ^^ pick only one of the frequency ranges here!
 
-[output]
-dir         = "output"               # The output directory
+[black_hole]
+mass        = 4.14e6                 # Msun
+distance    = 8.127                  # kpc
+
+[integration]
+stepsize       = 0.01                # The scaling factor for the integration step size
+max_steps      = 1e4                 # Maximum number of steps that each ray can take
+horizon_margin = 0.01                # A small wiggle factor for the horizon radius
+max_order      = 100                 # maximum number of turning points for theta
+
+[plasma]
+m_unit      = 1e18                   # mass unit of the simulation (we use cgs)
+r_low       = 1
+r_high      = 1
+# beta_c    = 1                      # plasma beta where the R_low / R_high prescription switches (optional)
+sigma_cut   = 1.0
+thetae_min  = 1e-3
+thetae_max  = 100.0
+rt_outer    = 50.0                   # no emission out of this radius
 
 [grmhd]
 dump_file   = "input/data2000.dat"   # The GRMHD data dump
 grid_file   = "input/grid_mks.in"    # The BHAC grid settings
-gpu_decode  = false                  # Decode the primitives on the GPU
+gpu_decode  = true                   # Decode the primitives on the GPU
 nspin       = 3                      # Index of the spin in the dump's neqpar
-sfc         = false                  # Read the data as a Morton space filling curve
+bpol        = 1                      # Sign of the poloidal field (1 / -1)
+sfc         = true                   # Read the data as a Morton space filling curve
 nlevels     = -1                     # The max number of AMR refinement levels (-1 if unknown)
-
-[plasma]
-r_low = 1
-r_high = 1

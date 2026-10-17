@@ -10,10 +10,18 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
 #include <map>
 #include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "core/model/headers.hpp"
 
@@ -30,6 +38,10 @@ namespace host {
 
       // [output]
       std::string outdir;
+      // "hdf5" (RAPTOR format), "text", "both" or "none"
+      std::string image = "hdf5";
+      // pixels per block side in the HDF5 file; must divide the image size
+      int block_size = 10;
 
       // [grmhd]
       std::string dump_file;
@@ -288,6 +300,10 @@ namespace host {
       // [visual]
       boolean("visual.show_header", params.show_header, true);
 
+      // [black_hole]
+      dbl("black_hole.mass", model_uparams->mass, true);
+      dbl("black_hole.distance", model_uparams->distance, true);
+
       // [integration]
       sclr("integration.stepsize", model_uparams->stepsize, true);
       integer("integration.max_steps", model_uparams->max_steps, true);
@@ -295,23 +311,41 @@ namespace host {
       integer("integration.max_order", model_uparams->max_order, true);
 
       // [camera]
-      dbl("camera.inclination", model_uparams->fov_x, true);
+      dbl("camera.inclination", model_uparams->inclination, true);
       integer("camera.img_width", model_uparams->img_width, true);
       integer("camera.img_height", model_uparams->img_height, true);
       dbl("camera.fov_x", model_uparams->fov_x, true);
       dbl("camera.fov_y", model_uparams->fov_y, true);
       dbl("camera.r_cam", model_uparams->r_cam, true);
       dbl("camera.t_init", model_uparams->t_init, true);
+      model_uparams->pa = 0.;
+      model_uparams->phi_cam = 0.;
+      dbl("camera.pa", model_uparams->pa, false);        // optional, deg
+      dbl("camera.phi", model_uparams->phi_cam, false);  // optional, deg (needs PHX_CAMERA_PHI)
+#if !PHX_CAMERA_PHI
+      if (model_uparams->phi_cam != 0.) throw std::runtime_error("camera.phi needs a build with PHX_CAMERA_PHI=ON");
+#endif
 
       try {
-        read_frequencies(arg_map, used, model_uparams->frequencies);
+        std::vector<double> freqs;
+        read_frequencies(arg_map, used, freqs);
+        if (freqs.size() > (size_t)PHX_MAX_FREQS) {
+          throw std::runtime_error("at most " + std::to_string(PHX_MAX_FREQS) + " frequencies (PHX_MAX_FREQS), got " + std::to_string(freqs.size()));
+        }
+        std::copy(freqs.begin(), freqs.end(), model_uparams->frequencies);
+        model_uparams->nfreqs = (int)freqs.size();
       } catch (const std::exception& e) {
         throw std::runtime_error(filepath + ": " + e.what());
       }
-      model_uparams->nfreqs = model_uparams->frequencies.size();
 
       // [output]
       str("output.dir", params.outdir, true);
+      str("output.image", params.image, false);
+      integer("output.block_size", params.block_size, false);
+      if (params.image != "hdf5" && params.image != "text" && params.image != "both" && params.image != "none") {
+        throw std::runtime_error(filepath + ": output.image must be hdf5, text, both or none");
+      }
+      if (params.block_size < 1) throw std::runtime_error(filepath + ": output.block_size must be >= 1");
 
       // [grmhd]
       str("grmhd.dump_file", params.dump_file, true);
@@ -321,9 +355,19 @@ namespace host {
       boolean("grmhd.sfc", model_uparams->sfc, true);
       integer("grmhd.nlevels", model_uparams->nlevels, true);
 
+      integer("grmhd.bpol", model_uparams->bpol, true);
+
       // [plasma]
+      dbl("plasma.m_unit", model_uparams->m_unit, true);
       dbl("plasma.r_low", model_uparams->r_low, true);
       dbl("plasma.r_high", model_uparams->r_high, true);
+      sclr("plasma.sigma_cut", model_uparams->sigma_cut, true);
+      sclr("plasma.thetae_min", model_uparams->thetae_min, true);
+      sclr("plasma.thetae_max", model_uparams->thetae_max, true);
+      sclr("plasma.rt_outer", model_uparams->rt_outer, true);
+      model_uparams->beta_c = 1.;
+      dbl("plasma.beta_c", model_uparams->beta_c, false);  // optional, RAPTOR: 1
+      if (!(model_uparams->beta_c > 0.)) throw std::runtime_error(filepath + ": plasma.beta_c must be > 0");
 
       if (!missing.empty()) {
         throw std::runtime_error(filepath + ": missing required key(s):" + missing);

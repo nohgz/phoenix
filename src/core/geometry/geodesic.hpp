@@ -167,5 +167,142 @@ namespace core {
                  + two * (cot + a2 * r * s2th * Sb2) * tp * P23
                  + two * C * rp * P13);
     }
+
+    /**
+     * @brief right hand side of the transport equations
+     * @param a      bh spin
+     * @param hslope the theta stretching parameter for mksbhac
+     * @param y      the position and wavevector
+     * @param f      the polarization vector
+     * @param dy OUT (k, accel(k, k))
+     * @param df OUT accel(k, f).
+     */
+    GRRT_SHARED_FUNCTION void rhs(
+      scalar a,
+      scalar hslope,
+      const scalar y[8],
+      const scalar f[4],
+      scalar dy[8],
+      scalar df[4]
+    ) {
+      const Geom G = make_geom(a, hslope, y[1], y[2]);
+      const scalar* U = y + 4;
+      scalar ag[4];
+      for (int i = 0; i < 4; i++) dy[i] = U[i];
+      accel(&G, U, U, ag);
+      accel(&G, U, f, df);
+      for (int i = 0; i < 4; i++) dy[4 + i] = ag[i];
+    }
+
+    /**
+     * @brief Distance of x2 to the nearest pole in scalar, from the (hi, lo) pair
+     */
+    GRRT_SHARED_FUNCTION scalar pole_x2(const Geodesic* geo) {
+      const int south = IS_FP32 && geo->hi[2] > scalar(0.5 * M_PI);
+      const scalar pi_hi = scalar(M_PI), pi_lo = scalar(M_PI - (double)scalar(M_PI));
+      if (south) return (pi_hi - geo->hi[2]) + (pi_lo - geo->lo[2]);
+      return geo->hi[2] + geo->lo[2];
+    }
+
+    /**
+     * @brief Helper function to abstract away compensated addition when not
+     *        in FP32
+     */
+    GRRT_SHARED_FORCEINLINE void add_to(Geodesic* geo, int i, scalar inc) {
+      if (IS_FP32) {
+        core::precision::comp_add(&geo->hi[i], &geo->lo[i], inc);
+      } else {
+        geo->hi[i] += inc;
+      }
+    }
+
+    /**
+     * @brief One RK4 step of size dt.
+     */
+    GRRT_SHARED_FUNCTION GRRT_HOST_NOINLINE void step(scalar a, scalar hslope, Geodesic* geo, scalar dt) {
+      const scalar pi_hi = scalar(M_PI), pi_lo = scalar(M_PI - (double)scalar(M_PI));
+      const int south = IS_FP32 && geo->hi[2] > scalar(0.5 * M_PI);
+      scalar dy[4][8], dfr[4][4];
+      scalar inc_y[8] = {scalar(0), scalar(0), scalar(0), scalar(0), scalar(0), scalar(0), scalar(0), scalar(0)};
+      scalar inc_f[4] = {scalar(0), scalar(0), scalar(0), scalar(0)};
+      const scalar w[3] = {scalar(0.5), scalar(0.5), scalar(1.0)};
+      for (int q = 0; q < 4; q++) {
+        scalar ty[8], tf[4];
+        for (int i = 0; i < 8; i++) {
+          ty[i] = geo->hi[i] + (geo->lo[i] + inc_y[i]);
+        }
+        for (int i = 0; i < 4; i++) {
+          tf[i] = geo->hi[8 + i] + (geo->lo[8 + i] + inc_f[i]);
+        }
+        if (south) {
+          ty[2] = (pi_hi - geo->hi[2]) + ((pi_lo - geo->lo[2]) - inc_y[2]);
+          ty[6] = -ty[6];
+          tf[2] = -tf[2];
+        }
+        rhs(a, hslope, ty, tf, dy[q], dfr[q]);
+        if (south) {
+          dy[q][2] = -dy[q][2];
+          dy[q][6] = -dy[q][6];
+          dfr[q][2] = -dfr[q][2];
+        }
+        if (q == 3) break;
+        const scalar wdt = w[q] * dt;
+        for (int i = 0; i < 8; i++) inc_y[i] = wdt * dy[q][i];
+        for (int i = 0; i < 4; i++) inc_f[i] = wdt * dfr[q][i];
+      }
+      const scalar two = scalar(2), dt6 = dt / scalar(6);
+      for (int i = 0; i < 8; i++) add_to(geo, i, ((dy[0][i] + dy[3][i]) + two * (dy[1][i] + dy[2][i])) * dt6);
+      for (int i = 0; i < 4; i++) add_to(geo, 8 + i, ((dfr[0][i] + dfr[3][i]) + two * (dfr[1][i] + dfr[2][i])) * dt6);
+    }
+
+    /**
+     * @brief Step-size rule of RAPTOR.
+     *
+     * @param stepsize  Fraction of the local scale one step may cross
+     * @param X_u       Position
+     * @param k_u       Wavevector
+     * @param dxc_block The 3 cell sizes of the block containing the ray, or NULL for "no grid cap"
+     * @return          Negative step (the ray is integrated backwards)
+     */
+    GRRT_SHARED_FUNCTION scalar step_size(
+      scalar stepsize,
+      const scalar X_u[4],
+      const scalar k_u[4],
+      const scalar* dxc_block
+    ) {
+      const scalar S2 = limits<scalar>::step_tiny;
+      const scalar dlx1 = stepsize / (std::fabs(k_u[1]) + S2);
+      const scalar dlx2 = stepsize * std::fmin(X_u[2], scalar(M_PI) - X_u[2]) / (std::fabs(k_u[2]) + S2);
+      const scalar dlx3 = stepsize / (std::fabs(k_u[3]) + S2);
+      const scalar i1 = scalar(1) / (std::fabs(dlx1) + S2);
+      const scalar i2 = scalar(1) / (std::fabs(dlx2) + S2);
+      const scalar i3 = scalar(1) / (std::fabs(dlx3) + S2);
+
+      scalar step_grid = limits<scalar>::step_big;
+      if (dxc_block) {
+        const scalar s1 = dxc_block[0] / (std::fabs(k_u[1]) + S2);
+        const scalar s2 = dxc_block[1] / (std::fabs(k_u[2]) + S2);
+        const scalar s3 = dxc_block[2] / (std::fabs(k_u[3]) + S2);
+        const scalar is1 = scalar(1) / (std::fabs(s1) + S2);
+        const scalar is2 = scalar(1) / (std::fabs(s2) + S2);
+        const scalar is3 = scalar(1) / (std::fabs(s3) + S2);
+        step_grid = scalar(1) / (is1 + is2 + is3) / scalar(4);
+      }
+      return -std::fmin(scalar(1) / (i1 + i2 + i3), step_grid);
+    }
+
+    /**
+     * @brief Re-solves k^t from the spatial components so that k.k = 0.
+     */
+    GRRT_SHARED_FUNCTION void normalize_null(const scalar g_dd[4][4], scalar k_u[4]) {
+      const scalar aa = g_dd[0][0];
+      const scalar k1 = k_u[1], k2 = k_u[2], k3 = k_u[3];
+      const scalar Betacap = -(g_dd[0][1] * k1) / (aa) - (g_dd[0][2] * k2) / (aa) - (g_dd[0][3] * k3) / (aa);
+      const scalar gammaZiri =
+         -(g_dd[1][1] * k1 * k1) / (aa) - (g_dd[1][2] * k1 * k2) / (aa) - (g_dd[1][3] * k1 * k3) / (aa) -
+          (g_dd[2][1] * k2 * k1) / (aa) - (g_dd[2][2] * k2 * k2) / (aa) - (g_dd[2][3] * k2 * k3) / (aa) -
+          (g_dd[3][1] * k3 * k1) / (aa) - (g_dd[3][2] * k3 * k2) / (aa) - (g_dd[3][3] * k3 * k3) / (aa);
+      k_u[0] = Betacap + std::sqrt(Betacap * Betacap + gammaZiri);
+    }
   }
 }

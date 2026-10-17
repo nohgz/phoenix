@@ -131,5 +131,54 @@ namespace core {
         F1_u[i] = (double)e_u[i][1];
       }
     }
+
+    /**
+     * @brief The angle between k and B in the plasma frame
+     */
+    GRRT_SHARED_FORCEINLINE scalar pitch_angle(
+      const scalar g_dd[4][4],
+      const scalar k_u[4],
+      const scalar B_u[4],
+      const scalar U_u[4]
+    ) {
+      const scalar Bn = std::sqrt(std::fabs(core::metric::inner_product(g_dd, B_u, B_u)));
+      if (Bn == scalar(0)) {
+        return scalar(M_PI / 2.);
+      }
+      const scalar kk = std::fabs(core::metric::inner_product(g_dd, k_u, U_u));
+      scalar mu = core::metric::inner_product(g_dd, k_u, B_u) / (kk * Bn);
+      if (std::fabs(mu) > scalar(1)) {
+        mu /= std::fabs(mu);
+      }
+      return std::acos(mu);
+    }
+
+    /**
+     * @brief Rotation of the plasma -> camera Stokes map
+     *
+     * @param g_dd  Metric at the sample
+     * @param e_u   Tetrad of the sample
+     * @param F1_u  Transported camera polarization vector
+     * @param c2    Output, cos 2psi
+     * @param s2    Output, sin 2psi
+     */
+    GRRT_SHARED_FORCEINLINE void chi_from_F1(
+      const scalar g_dd[4][4],
+      const scalar e_u[4][4],
+      const scalar F1_u[4],
+      scalar* c2,
+      scalar* s2
+    ) {
+      scalar ep[4], ea[4];
+      for (int mu = 0; mu < 4; mu++) {
+        ep[mu] = e_u[mu][1];
+        ea[mu] = e_u[mu][2];
+      }
+      const scalar C = core::metric::inner_product(g_dd, ep, F1_u);
+      const scalar S = core::metric::inner_product(g_dd, ea, F1_u);
+      const scalar n = C * C + S * S;
+      *c2 = (C * C - S * S) / n;
+      *s2 = scalar(2) * C * S / n;
+    }
   }
 }

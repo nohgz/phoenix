@@ -35,7 +35,7 @@ namespace core {
       C_DS = 8
     };
 
-    struct Units {
+    struct PlasmaUnits {
       double L;
       double T;
       double rho;
@@ -55,38 +55,14 @@ namespace core {
     };
 
     /**
-     * @brief Holds all parameters that the user can tweak (the PHOENIX equivalent of model.in)
+     * @brief Holds all parameters that the user can tweak.
+     *        (the PHOENIX equivalent of model.in).
+     *        This struct isn't v hot so I don't mind packing it poorly rn.
      */
     struct UserParams {
-      /*
-      From RAPTOR's model.in
-      MBH		(Msun)	4.14e6
-      DISTANCE		(kpc) 8.127
-      M_UNIT		(g)	1e+18
-      R_LOW		(-)	1
-      R_HIGH		(-)	1
-
-      INCLINATION	(deg)           50
-      IMG_WIDTH	(pixels)	500
-      IMG_HEIGHT	(pixels)	500
-      CAM_SIZE_X	(Rg)		40
-      CAM_SIZE_Y	(Rg)		40
-      FREQS_PER_DEC	(-)		1
-      FREQ_MIN	(Hz)		230.e9
-      STEPSIZE	(-)		0.01
-      MAX_LEVEL	(-)		1
-      --------
-      And the compile time flags (setup.sh)
-      */
-
-      // The spin's index in the dump neqpar
-      int nspin;
-      // The sign of the poloidal field
-      int bpol;
-      // The number of refinement levels
-      int nlevels;
-      // Should we use a Morton-ordered z curve?
-      bool sfc;
+      // [camera]
+      // The camera's inclination wrt the BH
+      double inclination;
       // The image width
       int img_width;
       // The image height
@@ -95,33 +71,69 @@ namespace core {
       double fov_x;
       // The camera vertical field of view
       double fov_y;
-      // The camera's inclination wrt the BH
-      double inclination;
       // The camera's distance to the BH
       double r_cam;
+      // The time the camera sits at
+      double t_init;
+      // Position angle of the image on the sky (deg)
+      double pa;
+      // Azimuth of the camera around the BH (deg, KS phi). Only used if PHX_CAMERA_PHI (this is dumb. gonna patch it out soon.)
+      double phi_cam;
+      // The array of frequencies to integrate over
+      double frequencies[PHX_MAX_FREQS];
+      // How many frequencies are we integrating over? (indirectly set by user)
+      int nfreqs;
+
+      // [black_hole]
+      // The black hole's mass (Msun)
+      double mass;
+      // The black hole's distance (kpc)
+      double distance;
+
+      // [integration]
+      // The scaling factor for the integration step size
+      scalar stepsize;
+      // Maximum number of steps that each ray can take
+      int max_steps;
+      // used to calculate cut_in
+      double horizon_margin;
+      // Maximum number of times theta can wrap
+      int max_order;
+
+      // [plasma]
+      // The mass unit of the simulation (g)
+      double m_unit;
       // electron temperature: Rlow prescription
       double r_low;
       // electron temperature: Rhigh prescription
       double r_high;
-      // The time the camera sits at
-      double t_init;
-      // used to calculate cut_in
-      double horizon_margin;
-      // The array of frequencies to integrate over
-      std::vector<double> frequencies;
-      // How many frequencies are we integrating over?
-      int nfreqs;
-      // Maximum number of steps that each ray can take
-      int max_steps;
-      // Maximum number of times theta can wrap
-      int max_order;
-      // The scaling factor for the integration step size
-      scalar stepsize;
+      // plasma beta where the R_low / R_high prescription switches (RAPTOR: 1)
+      double beta_c;
+      // no emission where b^2/rho > sigma_cut
+      scalar sigma_cut;
+      // electron temperature window [m_e c^2]
+      scalar thetae_min;
+      scalar thetae_max;
+      // no emission beyond this radius (Rg)
+      scalar rt_outer;
+
+      // [grmhd]
+      // The spin's index in the dump neqpar
+      int nspin;
+      // The sign of the poloidal field
+      int bpol;
+      // The number of refinement levels
+      int nlevels;
+      // Should we use a Morton-ordered z curve?
+      bool sfc;
     };
 
     struct Model {
       GridParams gparams;
       UserParams uparams;
+      PlasmaUnits units;
+
+      // from the dump header
       int nleafs, ndim, nwini, nws, cells;
       int nx[3];     // cells per block
       int ng[3];     // blocks per dimension on the base level
@@ -129,23 +141,35 @@ namespace core {
       // idx: [3*leaf + dim]
       scalar *lb;
       scalar *dxc;
+      // idx: [(leaf*cells + cell)*NPRIM + var]
+      scalar *prim;
 
       // for the metric
       scalar a, hslope;
 
       // for the plasma
-      scalar gam;
+      scalar gam, Ne, Bu, rhigh, rlow, ibc;  // ibc = 1 / beta_c
 
       // for the leaf finding table
       int level_dims[16][3];
       // leaf index per (level, i, j, k)
       // sentinel value of -1 (the thing that says go another amr level)
       int* level_map[16];
+      // cell size of each level's base blocks
+      scalar lvl_w[16][3];
+      // simulation domain
+      scalar x_lo[4], x_hi[4];
 
-      scalar *prim;
+      // cosine and sine of the position angle
+      double cos_pa, sin_pa;
 
       // for integration stuffs
-      scalar r_out, cut_in, far_radius;
+      scalar r_out, cut_in;
+
+      // for the transfer, per observing frequency
+      scalar freq[PHX_MAX_FREQS];    // [Hz]
+      scalar hconst[PHX_MAX_FREQS];  // m_e c^2 / (h nu) * r_g h / (m_e c^2): segment length -> optical depth
+      scalar jscale[PHX_MAX_FREQS];  // nu^3: S carries the intensity directly
     };
 
     /**
@@ -240,9 +264,10 @@ namespace core {
         cell / (model->nx[0] * model->nx[1])
       };
 
-      double X[3];
+      double X[3], dxc[3];
       for (int dim = 0; dim < 3; dim++) {
-        X[dim] = lb3[dim] + (loc[dim] + 0.5) * dxc3[dim];
+        dxc[dim] = (double)dxc3[dim];
+        X[dim] = (double)lb3[dim] + (loc[dim] + 0.5) * (double)dxc3[dim];
       }
 
       for (int var = 0; var < NPRIM; var++) {
@@ -251,7 +276,7 @@ namespace core {
 
       if (exp(X[0]) > 1.0) {
         double Xbar[3];
-        coord_bar(model, X, dxc3, Xbar);
+        coord_bar(model, X, dxc, Xbar);
         const double X_u[4] = {0., Xbar[0], Xbar[1], Xbar[2]};
 
         double g_dd[4][4], g_uu[4][4];
@@ -268,7 +293,8 @@ namespace core {
                         + Cv(C_S3) * Cv(C_B3);
 
         double Bsq = 0.;
-        double B_d[4] = {0, 0, 0, 0}, S_u[4] = {0, 0, 0, 0};
+        double B_d[4] = {0, 0, 0, 0};
+        double S_u[4] = {0, 0, 0, 0};
         double gamma_uu[4][4];
 
         for (int i = 1; i < 4; i++) {
@@ -300,14 +326,21 @@ namespace core {
         }
 
         const double den = xi + Bsq;
+        const double u1 = (S_u[1] / den + Cv(C_B1) * BS / (xi * den)) * lfac;
+        const double u2 = (S_u[2] / den + Cv(C_B2) * BS / (xi * den)) * lfac;
+        const double u3 = (S_u[3] / den + Cv(C_B3) * BS / (xi * den)) * lfac;
+        const double b1 = model->uparams.bpol * Cv(C_B1);
+        const double b2 = model->uparams.bpol * Cv(C_B2);
+        const double b3 = model->uparams.bpol * Cv(C_B3);
+
         prim[KRHO] = scalar(rho);
         prim[UU]   = scalar(uu);
-        prim[U1]   = scalar((S_u[1] / den + Cv(C_B1) * BS / (xi * den)) * lfac);
-        prim[U2]   = scalar((S_u[2] / den + Cv(C_B2) * BS / (xi * den)) * lfac);
-        prim[U3]   = scalar((S_u[3] / den + Cv(C_B3) * BS / (xi * den)) * lfac);
-        prim[B1]   = scalar(model->uparams.bpol * Cv(C_B1));
-        prim[B2]   = scalar(model->uparams.bpol * Cv(C_B2));
-        prim[B3]   = scalar(model->uparams.bpol * Cv(C_B3));
+        prim[U1]   = scalar(u1);
+        prim[U2]   = scalar(u2);
+        prim[U3]   = scalar(u3);
+        prim[B1]   = scalar(b1);
+        prim[B2]   = scalar(b2);
+        prim[B3]   = scalar(b3);
       }
 #undef Cv
     }
