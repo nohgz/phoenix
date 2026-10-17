@@ -37,11 +37,11 @@ to build `PHOENIX` in FP32 mode. Some useful flags are below:
 
 ## Usage
 Your first `PHOENIX` run will look something like this:
-1. Download a BHAC GRMHD snapshot to the `input` directory. The snapshot below can be found on the `RAPTOR` [GitHub](https://github.com/jordydavelaar/raptor).
+1. Download a BHAC GRMHD snapshot to the `input` directory. You can find the snapshot below on the `RAPTOR` [GitHub](https://github.com/jordydavelaar/raptor).
 ```
 wget -P input https://astro.ru.nl/~jordyd/data2000.dat
 ```
-2. Run `PHOENIX`. For this test, we'll pass some arguments via the command-line. The format matches the `input/config.toml` keys and values.
+2. Run `PHOENIX`. For this test, we'll pass some arguments via the command line. The format matches the `input/config.toml` keys and values.
 ```
 ./PHOENIX camera.inclination=10 plasma.m_unit=1.2e18
 ```
@@ -49,7 +49,7 @@ wget -P input https://astro.ru.nl/~jordyd/data2000.dat
 ```
 [ INFO ] Flux at 2.3000e+11 Hz (Jy): I +4.548971714e+00 Q +3.595375254e-03 U -3.479759672e-02 V +2.150556623e-02
 ```
-and output dumps should be written to `output/`! The HDF5 files can be processed using the `RAPTOR` rapplot.py toolchain. A tutorial can be found on the [RAPTOR GitHub](https://github.com/jordydavelaar/raptor#images)
+and output dumps should be written to `output/`! You can process the HDF5 files using the `RAPTOR` rapplot.py toolchain. A tutorial can be found on the [RAPTOR GitHub](https://github.com/jordydavelaar/raptor#images)
 
 ## Limitations
 Currently, `PHOENIX`
@@ -59,30 +59,30 @@ Currently, `PHOENIX`
 
 ## Code Organization Notes
 * `src/core` - Code that can run on both the device and host will live here.
-* `src/device` - Code that is device only will live here.
-* `src/host` - Code that is host only will live here.
+* `src/device` - Code that is device-only will live here.
+* `src/host` - Code that is host-only will live here.
 
 Namespaces follow the convention of `where_executes::header_name::function`. For example, `host::config::parse_toml(...)`.
 
 ## Planned Features
-* Doxygen documentation (the docblocks are mostly there, just have to generate it)
-* Real time rendering interface using ImGui
+* Doxygen documentation (the docblocks are mostly there; just have to generate it)
+* Real-time rendering interface using ImGui
 * Python library for running parameter sweeps
 * Support for arbitrary metrics & GRMHD codes
 
 ... and more!
 
 ## About
-The single-pass transfer operator formalism follows [Landi Degl'Innocenti & Landi Degl'Innocenti (1985)](https://ui.adsabs.harvard.edu/abs/1985SoPh...97..239L/abstract) as I found in Dexter (2016, Sec. 2.5.2).
-PHOENIX accumulates the contribution vectors (Dexter 2016, Eqs. 69–70) on the fly while tracing from the camera.
+The single-pass transfer operator formalism follows [Landi Degl'Innocenti & Landi Degl'Innocenti (1985)](https://ui.adsabs.harvard.edu/abs/1985SoPh...97..239L/abstract) as I found in [Dexter (2016, Sec. 2.5.2)](https://arxiv.org/abs/1602.03184).
+PHOENIX accumulates the contribution vectors (Dexter 2016, Eqs. 69-70) on the fly while tracing from the camera.
 
-PHOENIX was originally developed for an undergraduate senior thesis focused on high performance GRRT.
+PHOENIX was originally developed for an undergraduate senior thesis focused on high-performance GRRT.
 The poster created for its original presentation can be found here:
 > Noga, Christopher, "PHOENIX: GPU-Accelerated Polarized Radiative Transfer for Curved Spacetime" (2026).
 > *Symposium on Research and Creative Expression (SORCE)*. 1585.
 > https://scholar.valpo.edu/cus/1585
 
-This now-public repo is the second iteration of the code with substantial speedups, more professional commits (the other ones bring great shame upon my family's name), and major bugfixes.
+This now-public repo is the second iteration of the code with substantial speedups, more professional commits (the old ones bring great shame upon my family's name), and major bug fixes.
 
 ## Acknowledgements
 * (`RAPTOR` Authors) Thomas Bronzwaer, Jordy Davelaar, Ziri Younsi, Monika Moscibrodzka, Joost de Kleuver, Bram van der Berg, Renze Oosterhuis, Jesse Vos
