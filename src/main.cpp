@@ -227,6 +227,10 @@ int main(int argc, char *argv[]) {
   fp::infomsg("Launch: %d blocks x %d threads, %d registers/thread, %d B local memory/thread", gi.blocks, gi.block, gi.regs, gi.local_bytes);
 #endif
 
+  fp::blankmsg("Create output directory \"%s\"", conf_params.outdir.c_str());
+  mkdir(conf_params.outdir.c_str(), 0755);
+  fp::return_ok();
+
   fp::hline();
   const double t_out = now_s();
   write_output(&model, conf_params, res);
