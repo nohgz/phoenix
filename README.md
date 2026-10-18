@@ -13,7 +13,7 @@ The requirements below are what I used to compile `PHOENIX`. Older versions of s
 | CMake    | 3.20    |
 | C++      | 17      |
 | OpenMP   | 2021.11 |
-| HDF5     | 2.2.0   |
+| HDF5     | 2.1.1   |
 | CUDA (optional)     | 13.4    |
 
 ## Compilation
