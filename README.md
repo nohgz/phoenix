@@ -24,7 +24,7 @@ python3 pb.py
 
 If Python is unavailable, you can run
 ```
-cmake -S build . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 mv build/PHOENIX .
 ```
@@ -32,8 +32,8 @@ to build `PHOENIX` in FP32 mode. Some useful flags are below:
 
 | Flag | Description |
 | -------- | ------- |
-| DPHX_ACCURACY | Sets the precision of the `scalar` variable. Can be either `-DPHX_ACCURACY=FP32` or `-DPHX_ACCURACY=FP64`. `FP32` is the default operating mode. |
-| DPHX_FORCE_CPU | Forces CPU-only compilation if turned on. Can be either `-DPHX_FORCE_CPU=ON` or `-DPHX_FORCE_CPU=OFF`. `OFF` is the default operating mode.|
+| `-DPHX_ACCURACY` | Sets the precision of the `scalar` variable. Can be either `-DPHX_ACCURACY=FP32` or `-DPHX_ACCURACY=FP64`. `FP32` is the default operating mode. |
+| `-DPHX_FORCE_CPU` | Forces CPU-only compilation if turned on. Can be either `-DPHX_FORCE_CPU=ON` or `-DPHX_FORCE_CPU=OFF`. `OFF` is the default operating mode.|
 
 ## Usage
 Your first `PHOENIX` run will look something like this:
@@ -55,7 +55,7 @@ and output dumps should be written to `output/`! You can process the HDF5 files 
 Currently, `PHOENIX`
 * only works for single GRMHD snapshots, and extremely large snapshots may overflow GPU VRAM.
 * only supports BHAC dumps, but other GRMHD code support is planned.
-* has really only been validated for the test dump (`data2000.dat`) provided by the `RAPTOR` group. This is quite foolish of me but it *hopefully* should work for other BHAC dumps.
+* has really only been validated for the test dump (`data2000.dat`) provided by the `RAPTOR` group.
 
 ## Code Organization Notes
 * `src/core` - Code that can run on both the device and host will live here.
@@ -74,9 +74,9 @@ Namespaces follow the convention of `where_executes::header_name::function`. For
 
 ## About
 The single-pass transfer operator formalism follows [Landi Degl'Innocenti & Landi Degl'Innocenti (1985)](https://ui.adsabs.harvard.edu/abs/1985SoPh...97..239L/abstract) as I found in [Dexter (2016, Sec. 2.5.2)](https://arxiv.org/abs/1602.03184).
-PHOENIX accumulates the contribution vectors (Dexter 2016, Eqs. 69-70) on the fly while tracing from the camera.
+`PHOENIX` accumulates the contribution vectors (Dexter 2016, Eqs. 69-70) in the same step as it solves the geodesic equation while marching from the camera to the BH.
 
-PHOENIX was originally developed for an undergraduate senior thesis focused on high-performance GRRT.
+`PHOENIX` was originally developed for an undergraduate senior thesis focused on high-performance GRRT.
 The poster created for its original presentation can be found here:
 > Noga, Christopher, "PHOENIX: GPU-Accelerated Polarized Radiative Transfer for Curved Spacetime" (2026).
 > *Symposium on Research and Creative Expression (SORCE)*. 1585.
@@ -84,8 +84,11 @@ The poster created for its original presentation can be found here:
 
 This now-public repo is the second iteration of the code with substantial speedups, more professional commits (the old ones bring great shame upon my family's name), and major bug fixes.
 
+## AI Usage Disclosure
+Claude assisted in the development of `PHOENIX`. Its main roles were code cleanup, bug fixing, optimization, and helping interpret various papers into functions for physics routines. During development, I have personally validated numerous functions against their `RAPTOR` counterparts; however, some sneaky bugs may still remain.
+
 ## Acknowledgements
-* (`RAPTOR` Authors) Thomas Bronzwaer, Jordy Davelaar, Ziri Younsi, Monika Moscibrodzka, Joost de Kleuver, Bram van der Berg, Renze Oosterhuis, Jesse Vos
+* (`RAPTOR` Authors) Thomas Bronzwaer, Jordy Davelaar, Oliver Porth, Ziri Younsi, Monika Moscibrodzka, Joost de Kleuver, Bram van der Berg, Renze Oosterhuis, Jesse Vos
 * Valparaiso University Department of Physics and Astronomy
 
 *If anyone is left out, please let me know at `chris.noga@valpo.edu`!*
